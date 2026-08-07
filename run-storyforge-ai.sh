@@ -14,6 +14,23 @@ if ! command -v npm >/dev/null 2>&1; then
   exit 1
 fi
 
+# package.json requires Node >=20.9.0; distro-packaged Node is often older.
+node_ok() {
+  command -v node >/dev/null 2>&1 &&
+    node -e 'const [a,b]=process.versions.node.split(".").map(Number); process.exit(a>20||(a===20&&b>=9)?0:1)'
+}
+
+if ! node_ok && [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh"
+  nvm use default >/dev/null 2>&1 || nvm use --lts >/dev/null 2>&1
+fi
+
+if ! node_ok; then
+  echo "Node.js $(node --version 2>/dev/null || echo "(none)") is too old. Install Node.js 20.9 or newer and try again."
+  exit 1
+fi
+
 if [ "${1:-}" = "--check" ]; then
   echo "StoryForgeAI launcher prerequisites are available."
   exit 0
